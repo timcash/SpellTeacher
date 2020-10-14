@@ -33,28 +33,28 @@ local nothingSpell = 344862
 local flameShockId = 188389
 local lavaLashId = 60103
 
-local function flameShock()
-    local name = GetSpellInfo(flameShockId)
+local function flameShock(id)
+    local name = GetSpellInfo(id)
     local rangeCheck = IsSpellInRange(name, "target")
-    local start, duration, enabled = GetSpellCooldown(flameShockId);
+    local start, duration, enabled = GetSpellCooldown(id);
 
     if (start == 0 and duration == 0 and rangeCheck == 1) then
-         return flameShockId
+         return true
     end
 
-    return 0
+    return false
 end
 
-local function lavaLash()
-    local name = GetSpellInfo(lavaLashId)
+local function lavaLash(id)
+    local name = GetSpellInfo(id)
     local rangeCheck = IsSpellInRange(name, "target")
-    local start, duration, enabled = GetSpellCooldown(lavaLashId);
+    local start, duration, enabled = GetSpellCooldown(id);
 
     if (start == 0 and duration == 0 and rangeCheck == 1) then
-         return lavaLashId
+         return true
     end
 
-    return 0
+    return false
 end
 
 local function StormStrike()
@@ -66,8 +66,8 @@ local function AsralShift()
 end
 
 local function calcNext() 
-    if (lavaLash() ~= 0) then return lavaLashId end
-    if (flameShock() ~= 0) then return flameShockId end
+    if lavaLash(lavaLashId) then return lavaLashId end
+    if flameShock(flameShockId) then return flameShockId end
     return nothingSpell
 end
 
@@ -88,7 +88,7 @@ UpdateFrame1:SetScript("OnUpdate", function(self, elapsed)
 
         -- SCRIPT AREA -------------------------------------------
         local new_texture_id = calcNext()
-        print("new_texture_id", new_texture_id)
+
         if(texture_id ~= new_texture_id) then
             texture_id = new_texture_id 
             setIcon1(texture_id)
