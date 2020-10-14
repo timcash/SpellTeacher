@@ -31,19 +31,29 @@ local setIcon4 = makeButton(3 * size, 17364)
 
 local nothingSpell = 344862
 local flameShockId = 188389
-local lavaLash = 60103
+local lavaLashId = 60103
 
 local function flameShock()
-    local name = GetSpellInfo(lavaLash)
+    local name = GetSpellInfo(flameShockId)
     local rangeCheck = IsSpellInRange(name, "target")
-    local start, duration, enabled = GetSpellCooldown(lavaLash);
+    local start, duration, enabled = GetSpellCooldown(flameShockId);
 
     if (start == 0 and duration == 0 and rangeCheck == 1) then
-        print("lavaLash in range")
-         return 188389
+         return flameShockId
     end
-    
-    print("lavaLash NO")
+
+    return 0
+end
+
+local function lavaLash()
+    local name = GetSpellInfo(lavaLashId)
+    local rangeCheck = IsSpellInRange(name, "target")
+    local start, duration, enabled = GetSpellCooldown(lavaLashId);
+
+    if (start == 0 and duration == 0 and rangeCheck == 1) then
+         return lavaLashId
+    end
+
     return 0
 end
 
@@ -56,7 +66,8 @@ local function AsralShift()
 end
 
 local function calcNext() 
-    if (flameShock() ~= 0) then return 188389 end
+    if (lavaLash() ~= 0) then return lavaLashId end
+    if (flameShock() ~= 0) then return flameShockId end
     return nothingSpell
 end
 
