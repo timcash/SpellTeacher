@@ -1,0 +1,6 @@
+## Interface: 90001
+## Title: Spell Teacher
+## Author: Tim Cash
+## Version: 9.0001
+
+main.lua
