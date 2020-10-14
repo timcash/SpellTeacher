@@ -1,3 +1,8 @@
+local nothingSpellId = 344862
+local flameShockId = 188389
+local lavaLashId = 60103
+local astralShiftId = 108271
+
 local UpdateFrame1 = CreateFrame("frame", "UpdateFrame1")
 UpdateFrame1:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 
@@ -9,14 +14,18 @@ end)
 
 local function makeButton(offset, init_icon) 
     
+    local last_spell_id = nothingSpellId
     local button = CreateFrame("Button", nil, WorldFrame)
     button:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", offset, -500)
     button:SetWidth(32)
     button:SetHeight(32)
 
     local setSpellIcon = function(spell_id)
-        local texture = GetSpellTexture(spell_id)	
-        button:SetNormalTexture(texture)
+        if last_spell_id ~= spell_id then
+            last_spell_id = spell_id
+            local texture = GetSpellTexture(last_spell_id)	
+            button:SetNormalTexture(texture)
+        end
     end
 
     setSpellIcon(init_icon)
@@ -29,19 +38,16 @@ local setIcon2 = makeButton(1 * size, 17364)
 local setIcon3 = makeButton(2 * size, 17364)
 local setIcon4 = makeButton(3 * size, 17364)
 
-local nothingSpell = 344862
-local flameShockId = 188389
-local lavaLashId = 60103
 
 local function flameShock(id)
     local name = GetSpellInfo(id)
     local rangeCheck = IsSpellInRange(name, "target")
     local start, duration, enabled = GetSpellCooldown(id);
-
+    local finished = start + duration - GetTime()
     if (start == 0 and duration == 0 and rangeCheck == 1) then
-         return true
+        return true
     end
-
+    
     return false
 end
 
@@ -49,8 +55,8 @@ local function lavaLash(id)
     local name = GetSpellInfo(id)
     local rangeCheck = IsSpellInRange(name, "target")
     local start, duration, enabled = GetSpellCooldown(id);
-
-    if (start == 0 and duration == 0 and rangeCheck == 1) then
+    local finished = start + duration - GetTime()
+    if (finished < 0.5 and rangeCheck == 1) then
          return true
     end
 
@@ -65,14 +71,30 @@ local function AsralShift()
     return 108271
 end
 
-local function calcNext() 
+local function calcNextIcon1() 
     if lavaLash(lavaLashId) then return lavaLashId end
     if flameShock(flameShockId) then return flameShockId end
-    return nothingSpell
+    return astralShiftId
+end
+local function calcNextIcon2() 
+    if lavaLash(lavaLashId) then return lavaLashId end
+    if flameShock(flameShockId) then return flameShockId end
+    return astralShiftId
+end
+local function calcNextIcon3() 
+    if lavaLash(lavaLashId) then return lavaLashId end
+    if flameShock(flameShockId) then return flameShockId end
+    return astralShiftId
+end
+local function calcNextIcon4() 
+    if lavaLash(lavaLashId) then return lavaLashId end
+    if flameShock(flameShockId) then return flameShockId end
+    return astralShiftId
 end
 
 
-local interval = 1
+local interval = 0.3
+-- local interval = 1
 local total = 0
 local speed = 0
 local texture_id
@@ -87,12 +109,10 @@ UpdateFrame1:SetScript("OnUpdate", function(self, elapsed)
         total = 0
 
         -- SCRIPT AREA -------------------------------------------
-        local new_texture_id = calcNext()
-
-        if(texture_id ~= new_texture_id) then
-            texture_id = new_texture_id 
-            setIcon1(texture_id)
-        end
+        setIcon1(calcNextIcon1())
+        -- setIcon2(calcNextIcon2())
+        -- setIcon3(calcNextIcon3())
+        -- setIcon4(calcNextIcon4())
 	end
 end)
 
@@ -129,20 +149,3 @@ hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self, ...)
         print(name, aura_id)
     end
 end)
-
-
-
-
-
-
--- local htex = iconframe:CreateTexture()
--- htex:SetTexture("Interface/Buttons/UI-Panel-Button-Highlight")
--- htex:SetTexCoord(0, 0.625, 0, 0.6875)
--- htex:SetAllPoints()
--- button:SetHighlightTexture(htex)
-
--- local ptex = button:CreateTexture()
--- ptex:SetTexture("Interface/Buttons/UI-Panel-Button-Down")
--- ptex:SetTexCoord(0, 0.625, 0, 0.6875)
--- ptex:SetAllPoints()
--- button:SetPushedTexture(ptex)
