@@ -1,7 +1,15 @@
 local nothingSpellId = 344862
 local flameShockId = 188389
+local flameShockDebuffId = 188389
 local lavaLashId = 60103
 local astralShiftId = 108271
+local stormStikeId = 17364
+local crashLightningId = 187874
+local frostShockId = 196840
+
+-- ======================
+--        SETUP
+-- ======================
 
 local UpdateFrame1 = CreateFrame("frame", "UpdateFrame1")
 UpdateFrame1:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
@@ -14,9 +22,9 @@ end)
 
 local function makeButton(offset, init_icon) 
     
-    local last_spell_id = nothingSpellId
+    local last_spell_id = init_icon
     local button = CreateFrame("Button", nil, WorldFrame)
-    button:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", offset, -500)
+    button:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", offset, -400)
     button:SetWidth(32)
     button:SetHeight(32)
 
@@ -33,68 +41,92 @@ local function makeButton(offset, init_icon)
 end
 
 local size = 32
-local setIcon1 = makeButton(0 * size, 17364)
-local setIcon2 = makeButton(1 * size, 17364)
-local setIcon3 = makeButton(2 * size, 17364)
-local setIcon4 = makeButton(3 * size, 17364)
+local setIcon1 = makeButton(0 * size, nothingSpellId)
+local setIcon2 = makeButton(1 * size, flameShockId)
+local setIcon3 = makeButton(2 * size, crashLightningId)
+local setIcon4 = makeButton(3 * size, lavaLashId)
 
+-- ======================
+--        HELPERS
+-- ======================
 
-local function flameShock(id)
-    local name = GetSpellInfo(id)
-    local rangeCheck = IsSpellInRange(name, "target")
+local function spellReadyIn(id)
     local start, duration, enabled = GetSpellCooldown(id);
-    local finished = start + duration - GetTime()
-    if (start == 0 and duration == 0 and rangeCheck == 1) then
-        return true
+    return (start + duration) - GetTime() 
+end
+
+local function range(unit)
+    local r5 = IsSpellInRange("Lava Lash", unit)
+    if r5 == 1 then return 5 end
+    local r40 = IsSpellInRange("Flame Shock", unit)
+    if r40 == 1 then return 40 end
+    return 100
+end
+
+local function debuffRemaining(auraId, unit)
+    for i = 1,10,1
+    do
+        local name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = UnitAura(unit, i, "PLAYER")
+        if(spellId == auraId) then
+            return expirationTime - GetTime()
+        end
     end
-    
+    return 0
+end
+
+local function FlameShock()
+    local id = flameShockId
+    local debuffId = flameShockDebuffId
+    if (range("target") <= 40 and debuffRemaining(debuffId, "target") < 2 and spellReadyIn(id) < 0.3) then return true end
     return false
 end
 
-local function lavaLash(id)
-    local name = GetSpellInfo(id)
-    local rangeCheck = IsSpellInRange(name, "target")
-    local start, duration, enabled = GetSpellCooldown(id);
-    local finished = start + duration - GetTime()
-    if (finished < 0.5 and rangeCheck == 1) then
-         return true
-    end
-
+local function LavaLash()
+    local id = lavaLashId
+    if range("target") <= 5 and spellReadyIn(id) < 0.3 then return true end
     return false
 end
 
 local function StormStrike()
-    return 17364
+    local id = stormStikeId
+    if range("target") <= 5 and spellReadyIn(id) < 0.3 then return true end
+    return false
+end
+
+local function CrashLightning()
+    local id = crashLightningId
+    if range("target") <= 5 and spellReadyIn(id) < 0.3 then return true end
+    return false
 end
 
 local function AsralShift()
     return 108271
 end
 
+-- ======================
+--        CALCULATE
+-- ======================
+
 local function calcNextIcon1() 
-    if lavaLash(lavaLashId) then return lavaLashId end
-    if flameShock(flameShockId) then return flameShockId end
+    if FlameShock() then return flameShockId end
+    if StormStrike() then return stormStikeId end
+    if LavaLash() then return lavaLashId end
+    if CrashLightning() then return crashLightningId end
     return astralShiftId
 end
 local function calcNextIcon2() 
-    if lavaLash(lavaLashId) then return lavaLashId end
-    if flameShock(flameShockId) then return flameShockId end
     return astralShiftId
 end
 local function calcNextIcon3() 
-    if lavaLash(lavaLashId) then return lavaLashId end
-    if flameShock(flameShockId) then return flameShockId end
     return astralShiftId
 end
 local function calcNextIcon4() 
-    if lavaLash(lavaLashId) then return lavaLashId end
-    if flameShock(flameShockId) then return flameShockId end
     return astralShiftId
 end
 
 
-local interval = 0.3
--- local interval = 1
+--local interval = 0.3
+local interval = 1
 local total = 0
 local speed = 0
 local texture_id
@@ -110,9 +142,9 @@ UpdateFrame1:SetScript("OnUpdate", function(self, elapsed)
 
         -- SCRIPT AREA -------------------------------------------
         setIcon1(calcNextIcon1())
-        -- setIcon2(calcNextIcon2())
-        -- setIcon3(calcNextIcon3())
-        -- setIcon4(calcNextIcon4())
+        setIcon2(calcNextIcon2())
+        setIcon3(calcNextIcon3())
+        setIcon4(calcNextIcon4())
 	end
 end)
 
