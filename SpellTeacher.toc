@@ -3,4 +3,8 @@
 ## Author: Tim Cash
 ## Version: 9.0001
 
+utils.lua
+rouge.lua
+hunter.lua
+shaman.lua
 main.lua

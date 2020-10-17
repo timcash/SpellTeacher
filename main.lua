@@ -1,33 +1,18 @@
+local addonName, NS = ...
 local nothingSpellId = 344862
-local flameShockId = 188389
-local flameShockDebuffId = 188389
-local lavaLashId = 60103
-local astralShiftId = 108271
-local stormStikeId = 17364
-local crashLightningId = 187874
-local frostShockId = 196840
 
 -- ======================
 --        SETUP
 -- ======================
 
-local UpdateFrame1 = CreateFrame("frame", "UpdateFrame1")
-UpdateFrame1:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-
-UpdateFrame1:SetScript("OnEvent", function(self, event, ...)
-    if(event == "UPDATE_MOUSEOVER_UNIT") then
-        print("Health", UnitHealth("mouseover"))
-	end
-end)
-
 local function makeButton(offset, init_icon) 
     
     local last_spell_id = init_icon
     local button = CreateFrame("Button", nil, WorldFrame)
-    button:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", offset, -400)
+    button:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", 0, -400 - offset)
     button:SetWidth(32)
     button:SetHeight(32)
-
+    
     local setSpellIcon = function(spell_id)
         if last_spell_id ~= spell_id then
             last_spell_id = spell_id
@@ -42,111 +27,68 @@ end
 
 local size = 32
 local setIcon1 = makeButton(0 * size, nothingSpellId)
-local setIcon2 = makeButton(1 * size, flameShockId)
-local setIcon3 = makeButton(2 * size, crashLightningId)
-local setIcon4 = makeButton(3 * size, lavaLashId)
+local setIcon2 = makeButton(1 * size, nothingSpellId)
+local setIcon3 = makeButton(2 * size, nothingSpellId)
+local setIcon4 = makeButton(3 * size, nothingSpellId)
 
 -- ======================
---        HELPERS
+--       MAIN LOOP
 -- ======================
 
-local function spellReadyIn(id)
-    local start, duration, enabled = GetSpellCooldown(id);
-    return (start + duration) - GetTime() 
-end
-
-local function range(unit)
-    local r5 = IsSpellInRange("Lava Lash", unit)
-    if r5 == 1 then return 5 end
-    local r40 = IsSpellInRange("Flame Shock", unit)
-    if r40 == 1 then return 40 end
-    return 100
-end
-
-local function debuffRemaining(auraId, unit)
-    for i = 1,10,1
-    do
-        local name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = UnitAura(unit, i, "PLAYER")
-        if(spellId == auraId) then
-            return expirationTime - GetTime()
-        end
-    end
-    return 0
-end
-
-local function FlameShock()
-    local id = flameShockId
-    local debuffId = flameShockDebuffId
-    if (range("target") <= 40 and debuffRemaining(debuffId, "target") < 2 and spellReadyIn(id) < 0.3) then return true end
-    return false
-end
-
-local function LavaLash()
-    local id = lavaLashId
-    if range("target") <= 5 and spellReadyIn(id) < 0.3 then return true end
-    return false
-end
-
-local function StormStrike()
-    local id = stormStikeId
-    if range("target") <= 5 and spellReadyIn(id) < 0.3 then return true end
-    return false
-end
-
-local function CrashLightning()
-    local id = crashLightningId
-    if range("target") <= 5 and spellReadyIn(id) < 0.3 then return true end
-    return false
-end
-
-local function AsralShift()
-    return 108271
-end
-
--- ======================
---        CALCULATE
--- ======================
-
-local function calcNextIcon1() 
-    if FlameShock() then return flameShockId end
-    if StormStrike() then return stormStikeId end
-    if LavaLash() then return lavaLashId end
-    if CrashLightning() then return crashLightningId end
-    return astralShiftId
-end
-local function calcNextIcon2() 
-    return astralShiftId
-end
-local function calcNextIcon3() 
-    return astralShiftId
-end
-local function calcNextIcon4() 
-    return astralShiftId
-end
-
-
---local interval = 0.3
-local interval = 1
+local interval = 0.11
 local total = 0
-local speed = 0
-local texture_id
 
+local UpdateFrame1 = CreateFrame("frame", "UpdateFrame1")
 UpdateFrame1:SetScript("OnUpdate", function(self, elapsed)
     total = total + elapsed
     if(total > interval) then
-        local new_speed, _, _, _ = GetUnitSpeed("player")
-        if(speed ~= new_speed) then
-            speed = new_speed
-        end
         total = 0
+        local specKey = NS.getSpecKey()
 
         -- SCRIPT AREA -------------------------------------------
-        setIcon1(calcNextIcon1())
-        setIcon2(calcNextIcon2())
-        setIcon3(calcNextIcon3())
-        setIcon4(calcNextIcon4())
+        
+        NS.clearCache()
+        setIcon1(NS[specKey].calc1())
+        setIcon2(NS[specKey].calc2())
+        setIcon3(NS[specKey].calc3())
+        setIcon4(NS[specKey].calc4())
 	end
 end)
+
+local function test_cacheGet()
+    cache = {}
+    local x1, y1 = cacheGetSet("foo", 100, 0)
+    local x2, y2 = cacheGet("foo")
+    local x3, y3 = cacheGet("bar")
+    local x4, y4 = cacheGetSet("bar", 42)
+    local x5, y5 = cacheGet("bar")
+
+    print("TEST1", x1 == x2, y1 == y2)
+    print("TEST2", x3 == nil, y3 == nil)
+    print("TEST3", x4 == 42, y4 == nil)
+    print("TEST4", x5 == 42, y5 == nil)
+end
+
+UpdateFrame1:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
+UpdateFrame1:RegisterEvent("UNIT_SPELLCAST_SENT")
+UpdateFrame1:SetScript("OnEvent", function(self, event, ...)
+    if(event == "UPDATE_MOUSEOVER_UNIT") then
+        -- print(NS.getSpecKey())
+        -- test_cacheGet()
+        -- print("Health", UnitHealth("mouseover"))
+        -- print("calcKey", NS.getSpecKey())
+    end
+    if(event == "UNIT_SPELLCAST_SENT") then
+        local unit, _,_,spellId = ...
+        if unit == "player" then
+            NS.dbPut("player_last_spell_id", spellId)
+        end
+    end
+end)
+
+-- ======================
+--         HOOKS
+-- ======================
 
 local spell_id
 GameTooltip:HookScript("OnTooltipSetSpell", function(self)
