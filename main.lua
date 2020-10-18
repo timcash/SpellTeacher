@@ -1,17 +1,30 @@
 local addonName, NS = ...
 local nothingSpellId = 344862
+local iconSize = 48
 
 -- ======================
 --        SETUP
 -- ======================
+local UpdateFrame1 = CreateFrame("frame", "UpdateFrame1", UIParent, BackdropTemplateMixin and "BackdropTemplate")
+UpdateFrame1:SetSize(300,360); -- width, height
+UpdateFrame1:SetPoint("TOPLEFT", UIParent, "TOPLEFT"); -- point, relativeFrame, relativePoint, xOffset, yOffset
+UpdateFrame1.text = UpdateFrame1:CreateFontString(nil,"ARTWORK") 
+UpdateFrame1.text:SetFont("Fonts\\ARIALN.ttf", 32, "OUTLINE")
+UpdateFrame1.text:SetPoint("TOPLEFT",0,0)
+UpdateFrame1.text:SetText("foo bar")
+UpdateFrame1:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background", 
+                            edgeFile = "Interface/Tooltips/UI-Tooltip-Border", 
+                            tile = true, tileSize = 16, edgeSize = 16, 
+                            insets = { left = 4, right = 4, top = 4, bottom = 4 }});
+UpdateFrame1:SetBackdropColor(0,0,0,1);
 
 local function makeButton(offset, init_icon) 
     
     local last_spell_id = init_icon
-    local button = CreateFrame("Button", nil, WorldFrame)
-    button:SetPoint("TOPLEFT", WorldFrame, "TOPLEFT", 0, -400 - offset)
-    button:SetWidth(32)
-    button:SetHeight(32)
+    local button = CreateFrame("Button", nil, UpdateFrame1)
+    button:SetPoint("TOPLEFT", UpdateFrame1, "TOPLEFT", 0, 0 - offset)
+    button:SetWidth(iconSize)
+    button:SetHeight(iconSize)
     
     local setSpellIcon = function(spell_id)
         if last_spell_id ~= spell_id then
@@ -25,11 +38,10 @@ local function makeButton(offset, init_icon)
     return setSpellIcon
 end
 
-local size = 32
-local setIcon1 = makeButton(0 * size, nothingSpellId)
-local setIcon2 = makeButton(1 * size, nothingSpellId)
-local setIcon3 = makeButton(2 * size, nothingSpellId)
-local setIcon4 = makeButton(3 * size, nothingSpellId)
+local setIcon1 = makeButton(0 * iconSize, nothingSpellId)
+local setIcon2 = makeButton(1 * iconSize, nothingSpellId)
+local setIcon3 = makeButton(2 * iconSize, nothingSpellId)
+local setIcon4 = makeButton(3 * iconSize, nothingSpellId)
 
 -- ======================
 --       MAIN LOOP
@@ -37,8 +49,6 @@ local setIcon4 = makeButton(3 * size, nothingSpellId)
 
 local interval = 0.11
 local total = 0
-
-local UpdateFrame1 = CreateFrame("frame", "UpdateFrame1")
 UpdateFrame1:SetScript("OnUpdate", function(self, elapsed)
     total = total + elapsed
     if(total > interval) then
@@ -48,10 +58,12 @@ UpdateFrame1:SetScript("OnUpdate", function(self, elapsed)
         -- SCRIPT AREA -------------------------------------------
         
         NS.clearCache()
-        setIcon1(NS[specKey].calc1())
-        setIcon2(NS[specKey].calc2())
-        setIcon3(NS[specKey].calc3())
-        setIcon4(NS[specKey].calc4())
+        if NS[specKey] ~= nil then
+            setIcon1(NS[specKey].calc1())
+            setIcon2(NS[specKey].calc2())
+            setIcon3(NS[specKey].calc3())
+            setIcon4(NS[specKey].calc4())
+        end
 	end
 end)
 
